@@ -1,5 +1,5 @@
 [package]
-name = "CORVID-sim"
+name = "CORVID_sim"
 version = "0.1.0"
 authors = ["trygve@stasjoner <trygve.woldseth@gmail.com>"]
 edition = "2018"
