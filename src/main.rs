@@ -22,7 +22,7 @@ struct Simulator<'a> {
 
 }
 
-impl<'a> Simulator<'a> {
+impl<'a> Simulator<'_> {
     fn new(x_size: usize, y_size: usize, start_pop_size: i32, start_infected_size: i32) -> Simulator<'a>{
         let sg = SimGrid::new(x_size, y_size);
         Simulator{
@@ -54,12 +54,18 @@ impl<'a> Simulator<'a> {
             let p = Person::new(infected_state, pos);
             self.persons.push(p);
         }
-
         for pers in self.persons.iter(){
             pers.init_move(&mut self.sim_grid)
             
         }
 
+    }
+
+    pub fn step(& mut self){
+        let mut rng = rand::thread_rng();
+        for pers in self.persons.iter_mut(){
+            pers.act(rng.gen_range(0, 4),&mut self.sim_grid) 
+        }
     }
 
 
