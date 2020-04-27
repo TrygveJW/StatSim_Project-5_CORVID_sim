@@ -54,11 +54,11 @@ fn main() {
     for n in 0..=500 {
         if n % 100 == 0{
             
-            sim.print_stats();
+            sim.logger.print_stats();
             //println!("{}", sim.sim_grid.logger.map_logger.len())
         }
         if sim.step() {
-            sim.print_stats();
+            sim.logger.print_stats();
             break;
         }
     }
