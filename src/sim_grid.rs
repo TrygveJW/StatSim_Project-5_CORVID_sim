@@ -11,7 +11,6 @@ pub struct SimGrid {
     x_size: i32,
     y_size: i32,
     pub grid: Vec<TileState>,
-
 }
 
 
@@ -48,10 +47,11 @@ impl SimGrid {
         false
     }
 
-    pub fn set_value_at(&mut self, pos: & Position, val: TileState){
+    pub fn set_value_at(&mut self,  pos: & Position, val: TileState){
         let new_index = self.get_index(pos);
         self.grid[new_index as usize] = val;
     }
+
     
     pub fn get_value_at(&self, pos: &Position) -> TileState{
         if self.is_valid(pos){

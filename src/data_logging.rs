@@ -85,6 +85,7 @@ impl SimLogger {
         println!("Num Dead \t{:#?}", ded);
 
         println!("################################################");
+        println!("log len \t{:#?}", self.map_logger.len());
 
     }
 

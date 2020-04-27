@@ -24,7 +24,7 @@ impl Person {
         }
     }
     // pub
-    pub fn act(&mut self, rng_val: i32, simulator: Simulator) -> Simulator{
+    pub fn act(&mut self, rng_val: i32, simulator: &mut Simulator){
         if self.isolated{
             if self.infected_in_isolation {
                 simulator.update_sir_state(self);
@@ -39,7 +39,6 @@ impl Person {
                 _ => false,
             };
         }
-        simulator
         
     }
 

@@ -6,7 +6,9 @@ use crate::sim_grid::SimGrid;
 
 use rand::Rng;
 
-
+struct simulation_data {
+    
+}
 
 pub struct Simulator {
     sim_grid: SimGrid,
@@ -31,10 +33,10 @@ pub struct Simulator {
     sim_tick: i32,
     pub logger: SimLogger,
     rng: rand::rngs::ThreadRng,
-
-    pub persons: Vec<Person>
     
 }
+
+
 
 impl Simulator {
     pub fn new(x_size: i32, y_size: i32, start_pop_size: i32, start_infected_size: i32,
@@ -63,17 +65,15 @@ impl Simulator {
 
             done: false,
             rng: rand::thread_rng(),
-            sim_tick: 0,
-
-            persons: Vec::with_capacity(start_pop_size as usize),
-            
+            sim_tick: 0,            
             
 
         }
 
     }
 
-    pub fn populate(& mut self){
+    fn populate(& mut self) -> Vec<Person> {
+        let mut ret  = Vec::with_capacity(self.start_pop_size as usize);
         let mut rng = rand::thread_rng();
         let mut num_infected = 0;
         let mut num_in_isolation = 0;
@@ -103,7 +103,7 @@ impl Simulator {
                 let pos = Position{x: rng.gen_range(0, self.x_size), y: rng.gen_range(0, self.y_size)};
                 if self.sim_grid.is_free(&pos) {
                     let p = Person::new(tile_state, pos, in_quarantine, self.infected_in_isolation);
-                    self.sim_grid.persons.push(p);
+                    ret.push(p);
                     
                     break;
                 }
@@ -111,57 +111,39 @@ impl Simulator {
             
         }
         let sg = &mut self.sim_grid;
-        for pers in self.persons.iter(){
+        for pers in ret.iter(){
             pers.init_move(sg)
         }
+        ret
     }
 
-    pub fn act(&mut self, rng_val: i32, person: &mut Person) {
-        if person.isolated{
-            if person.infected_in_isolation {
-                self.update_sir_state(person);
+
+
+
+    pub fn run(&mut self, max_steps : i64, log_every : i32){
+        let mut persons = self.populate();
+        for n in 0..max_steps{
+            for pers in &mut persons {
+                pers.act(self.rng.gen_range(0, 4), self);
             }
-        } else {
-            self.update_sir_state(person);
-            let has_moved = match rng_val {
-                1 => self.try_move(person, Direction::Up),
-                2 => self.try_move(person, Direction::Down),
-                3 => self.try_move(person, Direction::Left),
-                4 => self.try_move(person, Direction::Right),
-                _ => false,
-            };
+            
+            self.sim_tick += 1;
+    
+            self.logger.log_curent_grid(&self.sim_grid);
+
+            if let Some(state) = self.logger.num_in_states.get(&TileState::Infectious(0)) {
+                let inf = *state;
+                if inf == 0 {
+                    self.logger.print_stats();
+                    break;
+                };
+            }
+
+            if self.sim_tick % 100 == 0{
+            
+                self.logger.print_stats();
+            }
         }
-        
-        
-    }
-
-
-    fn simulate(&mut self){
-        let mut rng = rand::thread_rng();
-
-        for pers in &mut self.sim_grid.persons{
-            pers.act(rng.gen_range(0, 4), self);
-        }
-    }
-
-
-    pub fn step(&mut self) -> bool{
-        
-        //let sg = & ;
-        self.simulate();
-        
-        self.sim_tick += 1;
-
-        self.logger.log_curent_grid(&self.sim_grid);
-        //println!("{}", self.map_logger.len())
-
-        if let Some(state) = self.logger.num_in_states.get(&TileState::Infectious(0)) {
-            let inf = *state;
-            if inf == 0 {
-                return true;
-            };
-        }
-        false
     }
 
     pub fn try_move(&mut self, person: &mut Person, dir: Direction) -> bool{
@@ -191,7 +173,6 @@ impl Simulator {
     }
 
     pub fn update_sir_state(&mut self, person: &mut Person){
-        //
         match person.state {
             TileState::Infectious(_) => (
                 if self.sim_tick - person.infected_tick > self.infected_time{

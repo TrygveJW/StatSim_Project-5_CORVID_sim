@@ -15,7 +15,6 @@ use rand::Rng;
 
 
 
-
 fn main() {
 
     
@@ -46,22 +45,8 @@ fn main() {
     );
 
     
-    sim.populate();
-    
 
-    
-
-    for n in 0..=500 {
-        if n % 100 == 0{
-            
-            sim.logger.print_stats();
-            //println!("{}", sim.sim_grid.logger.map_logger.len())
-        }
-        if sim.step() {
-            sim.logger.print_stats();
-            break;
-        }
-    }
+    sim.run(1000, 100);
 
 
     // let path = Path::new("out/Game_data_array");
