@@ -1,4 +1,3 @@
-
 #[derive(Clone, Copy, PartialEq, Hash, Eq, Debug)]
 pub enum TileState {
     Susceptible,

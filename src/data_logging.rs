@@ -38,28 +38,23 @@ impl SimLogger {
         *count += 1;
     }
 
-    pub fn log_state_entry(&mut self, new_state: TileState){
+    pub fn log_state_entry(&mut self, new_state: TileState) {
         let count = self.num_in_states.entry(new_state).or_insert(0);
         *count += 1;
     }
 
-    pub fn log_curent_grid(&mut self, sim_grid: &SimGrid){
+    pub fn log_curent_grid(&mut self, sim_grid: &SimGrid) {
         self.map_logger.push(sim_grid.grid.clone());
     }
 
-
-    pub fn print_stats(&self){
-        
-
+    pub fn print_stats(&self) {
         let mut sus = 0;
         let mut inf = 0;
         let mut rec = 0;
         let mut ded = 0;
 
-
         if let Some(state) = self.num_in_states.get(&TileState::Susceptible) {
             sus = *state;
-            
         }
         if let Some(state) = self.num_in_states.get(&TileState::Infectious(0)) {
             inf = *state;
@@ -70,9 +65,12 @@ impl SimLogger {
         if let Some(state) = self.num_in_states.get(&TileState::Dead) {
             ded = *state;
         }
-        
-        let death_rate = if rec == 0 {0.0} else {(ded as f64/rec as f64)  * 100.0};
-        
+
+        let death_rate = if rec == 0 {
+            0.0
+        } else {
+            (ded as f64 / rec as f64) * 100.0
+        };
 
         println!("\n################################################");
         //println!("Step: {}\n", self.sim_grid.tick);
@@ -86,11 +84,10 @@ impl SimLogger {
 
         println!("################################################");
         println!("log len \t{:#?}", self.map_logger.len());
-
     }
 
-    fn format_sim_data_to_int_array(&self) -> Vec<Vec<i32>>{
-        let mut ret : Vec<Vec<i32>> = Vec::new();
+    fn format_sim_data_to_int_array(&self) -> Vec<Vec<i32>> {
+        let mut ret: Vec<Vec<i32>> = Vec::new();
         for ts in &self.map_logger {
             let mut layer: Vec<i32> = Vec::new();
             for &tile in ts {
@@ -108,17 +105,16 @@ impl SimLogger {
         ret
     }
 
-    fn avg_last_reprod_nums(&self, num_to_avg : usize) -> f64{
+    fn avg_last_reprod_nums(&self, num_to_avg: usize) -> f64 {
         let rp_vec = &self.reproduction_nums;
         //println!("Num Dead \t{:#?}", rp_vec);
 
         let target_len = rp_vec.len();
         if num_to_avg >= target_len {
-            return -1.0
+            return -1.0;
         } else {
             let from = (target_len as i32 - num_to_avg as i32) as usize;
-            rp_vec[from..].iter().sum::<i32>() as f64/(num_to_avg as f64)
+            rp_vec[from..].iter().sum::<i32>() as f64 / (num_to_avg as f64)
         }
-    
     }
 }

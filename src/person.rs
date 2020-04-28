@@ -9,11 +9,15 @@ pub struct Person {
     pub infected_tick: i32,
     pub isolated: bool,
     pub infected_in_isolation: bool,
-
 }
 
 impl Person {
-    pub fn new(state: TileState, pos: Position, isolated: bool, infected_in_isolation: bool,) -> Person {
+    pub fn new(
+        state: TileState,
+        pos: Position,
+        isolated: bool,
+        infected_in_isolation: bool,
+    ) -> Person {
         Person {
             age: Person::gen_age(),
             state,
@@ -24,8 +28,8 @@ impl Person {
         }
     }
     // pub
-    pub fn act(&mut self, rng_val: i32, simulator: &mut Simulator){
-        if self.isolated{
+    pub fn act(&mut self, rng_val: i32, simulator: &mut Simulator) {
+        if self.isolated {
             if self.infected_in_isolation {
                 simulator.update_sir_state(self);
             }
@@ -39,7 +43,6 @@ impl Person {
                 _ => false,
             };
         }
-        
     }
 
     pub fn init_move(&self, sim_grid: &mut SimGrid) {
