@@ -36,13 +36,27 @@ pub struct Simulator {
     
 }
 
-
+pub fn run_simulation(x_size: i32, y_size: i32, start_pop_size: i32, start_infected_size: i32,
+    infected_chance: f64, infected_time: i32, mortality_rate: Vec<(i32,f64)>, quarantine: bool, can_die: bool, isolation: f64, infected_in_isolation: bool,){
+        let sim = Simulator::new(x_size, y_size, start_pop_size, start_infected_size,
+            infected_chance, infected_time, quarantine, can_die, isolation, infected_in_isolation);
+        
+    }
 
 impl Simulator {
     pub fn new(x_size: i32, y_size: i32, start_pop_size: i32, start_infected_size: i32,
-        infected_chance: f64, infected_time: i32, mortality_rate: Vec<(i32,f64)>, quarantine: bool, can_die: bool, isolation: f64, infected_in_isolation: bool,) -> Simulator{
+        infected_chance: f64, infected_time: i32, quarantine: bool, can_die: bool, isolation: f64, infected_in_isolation: bool,) -> Simulator{
         let logger = SimLogger::new(start_pop_size);
         let sg = SimGrid::new(x_size, y_size);
+
+        let mut mortality_rate = Vec::<(i32, f64)>::new();
+
+        mortality_rate.push((0, 0.0));
+        mortality_rate.push((20, 0.03));
+        mortality_rate.push((50, 0.5));
+        mortality_rate.push((60, 0.1));
+        mortality_rate.push((80, 0.2));
+
         Simulator{
             sim_grid: sg,
             simulator_ticks: 0,
@@ -139,7 +153,7 @@ impl Simulator {
                 };
             }
 
-            if self.sim_tick % 100 == 0{
+            if self.sim_tick % log_every == 0{
             
                 self.logger.print_stats();
             }
@@ -223,9 +237,4 @@ impl Simulator {
             return false
         }
     }
-
-
-
-
-
 }
