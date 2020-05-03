@@ -1,6 +1,12 @@
 use crate::helpers::*;
 use crate::sim_grid::SimGrid;
 use crate::simulator::Simulator;
+use rand::Rng;
+
+
+
+
+
 
 pub struct Person {
     pub age: i32,
@@ -13,13 +19,14 @@ pub struct Person {
 
 impl Person {
     pub fn new(
+        age: i32,
         state: TileState,
         pos: Position,
         isolated: bool,
         infected_in_isolation: bool,
     ) -> Person {
         Person {
-            age: Person::gen_age(),
+            age,
             state,
             pos,
             infected_tick: 0,
@@ -27,7 +34,7 @@ impl Person {
             infected_in_isolation,
         }
     }
-    // pub
+
     pub fn act(&mut self, rng_val: i32, simulator: &mut Simulator) {
         if self.isolated {
             if self.infected_in_isolation {
@@ -49,9 +56,5 @@ impl Person {
         sim_grid.set_value_at(&self.pos, self.state);
     }
 
-    fn gen_age() -> i32 {
-        35
-    }
 
-    // priv
 }

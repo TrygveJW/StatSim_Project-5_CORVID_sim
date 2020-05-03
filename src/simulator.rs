@@ -18,7 +18,6 @@ pub struct Simulator {
 
     infected_chance: f64,
     infected_time: i32,
-    mortality_rate: Vec<(i32, f64)>,
 
     quarantine: bool,
     quarantine_red_time: i32,
@@ -33,35 +32,59 @@ pub struct Simulator {
     rng: rand::rngs::ThreadRng,
 }
 
-pub fn run_simulation(
-    x_size: i32,
-    y_size: i32,
-    start_pop_size: i32,
-    start_infected_size: i32,
-    infected_chance: f64,
-    infected_time: i32,
-    quarantine: bool,
-    quarantine_red_time: i32,
-    quarantine_wall_pos: i32,
-    can_die: bool,
-    isolation: f64,
-    infected_in_isolation: bool,
-) {
-    let sim = Simulator::new(
-        x_size,
-        y_size,
-        start_pop_size,
-        start_infected_size,
-        infected_chance,
-        infected_time,
-        quarantine,
-        quarantine_red_time,
-        quarantine_wall_pos,
-        can_die,
-        isolation,
-        infected_in_isolation,
-    );
+
+// Age: 80-90, Probability: 8%
+// Age: 60-79, Probability: 20%
+// Age: 40-59, Probability: 25%
+// Age: 20-39, Probability: 30%
+// Age: 0-19, Probability: 17%
+
+
+fn get_random_age() -> i32 {
+    let random = rand::thread_rng().gen_range(0, 101);
+
+    match random {
+        0..=17 => rand::thread_rng().gen_range(0, 20),
+        17..=47 => rand::thread_rng().gen_range(20, 29),
+        47..=72 => rand::thread_rng().gen_range(40, 59),
+        72..=92 => rand::thread_rng().gen_range(60, 79),
+        _       => rand::thread_rng().gen_range(80, 90),
+    }
+
 }
+
+/*
+
+
+    Age: 80+, Mortality: 14.8%
+    Age: 70+, Mortality: 8%
+    Age: 60+, Mortality: 3.6%
+    Age: 50+, Mortality: 1.3%
+    Age: 40+, Mortality: 0.4%
+    Age: 30+, Mortality: 0.2%
+    Age: 20+, Mortality: 0.2%
+    Age: 10+, Mortality: 0.2%
+    Age: 0+, Mortality: 0%
+
+
+*/ 
+
+fn will_person_die(person: &Person) -> bool{
+    let die_probabilities: [(i32, i32); 5] = [(10, 0), (40, 2), (50, 4), (60,13), (70, 80)];
+    let mut die_prob = 148;
+    for (age, prob) in &die_probabilities {
+        if *age < person.age {
+            die_prob = *prob;
+        }
+    }
+    //println!("{}   {} ",rn,  die_prob );
+    if rand::thread_rng().gen_range(0, 1001) < die_prob {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 
 impl Simulator {
     pub fn new(
@@ -71,27 +94,10 @@ impl Simulator {
         start_infected_size: i32,
         infected_chance: f64,
         infected_time: i32,
-        quarantine: bool,
-        quarantine_red_time: i32,
-        quarantine_wall_pos: i32,
         can_die: bool,
-        isolation: f64,
-        infected_in_isolation: bool,
     ) -> Simulator {
         let logger = SimLogger::new(start_pop_size);
         let sg = SimGrid::new(x_size, y_size);
-
-        if quarantine{
-            sg.make_quarantine(quarantine_wall_pos)
-        }
-
-        let mut mortality_rate = Vec::<(i32, f64)>::new();
-
-        mortality_rate.push((0, 0.0));
-        mortality_rate.push((20, 0.03));
-        mortality_rate.push((50, 0.5));
-        mortality_rate.push((60, 0.1));
-        mortality_rate.push((80, 0.2));
 
         Simulator {
             sim_grid: sg,
@@ -105,15 +111,14 @@ impl Simulator {
 
             infected_chance,
             infected_time,
-            mortality_rate,
             logger,
 
-            quarantine,
-            quarantine_red_time,
-            quarantine_wall_pos,
+            quarantine: false,
+            quarantine_red_time: 0,
+            quarantine_wall_pos: 0,
             can_die,
-            isolation,
-            infected_in_isolation,
+            isolation: 0.0,
+            infected_in_isolation: false,
 
             done: false,
             rng: rand::thread_rng(),
@@ -121,6 +126,25 @@ impl Simulator {
         }
     }
 
+    pub fn add_quarantine(&mut self, quarantine_red_time: i32, quarantine_wall_pos: i32) {
+        self.quarantine = true;
+        self.quarantine_red_time = quarantine_red_time;
+        self.quarantine_wall_pos = quarantine_wall_pos;
+        self.sim_grid.make_quarantine(quarantine_wall_pos)
+    }
+
+    pub fn add_isolation(&mut self, fracton_in_isolation: f64, can_get_infected_in_isolation: bool) {
+        self.isolation = fracton_in_isolation;
+        self.infected_in_isolation = can_get_infected_in_isolation;
+    }
+
+    
+
+
+}
+
+
+impl Simulator{
     fn populate(&mut self) -> Vec<Person> {
         let mut ret = Vec::with_capacity(self.start_pop_size as usize);
         let mut rng = rand::thread_rng();
@@ -147,7 +171,7 @@ impl Simulator {
 
             let tries = 0;
             while tries < 50 {
-                let pos = Position {
+                let mut pos = Position {
                     x: rng.gen_range(0, self.x_size),
                     y: rng.gen_range(0, self.y_size),
                 };
@@ -166,7 +190,7 @@ impl Simulator {
                     
                 
                 if self.sim_grid.is_free(&pos) {
-                    let p = Person::new(tile_state, pos, in_quarantine, self.infected_in_isolation);
+                    let p = Person::new(get_random_age(), tile_state, pos, in_quarantine, self.infected_in_isolation);
                     ret.push(p);
 
                     break;
@@ -251,7 +275,7 @@ impl Simulator {
                         self.logger.log_reprod_num(&person, n);
                     }
 
-                    if self.will_die(person) {
+                    if will_person_die(person) {
                         self.update_state(person, TileState::Dead);
                     } else {
                         self.update_state(person, TileState::Recovered);
@@ -274,21 +298,5 @@ impl Simulator {
         self.sim_grid.set_value_at(&person.pos, new_state);
         self.logger.log_state_change(&person, &new_state);
         person.state = new_state;
-    }
-
-    fn will_die(&mut self, person: &Person) -> bool {
-        let mut die_prob = self.mortality_rate[self.mortality_rate.len() - 1].1;
-        for (age, prob) in &self.mortality_rate {
-            if *age < person.age {
-                die_prob = *prob;
-            }
-        }
-        let rn = self.rng.gen::<f64>();
-        //println!("{}   {} ",rn,  die_prob );
-        if rn < die_prob {
-            return true;
-        } else {
-            return false;
-        }
     }
 }
